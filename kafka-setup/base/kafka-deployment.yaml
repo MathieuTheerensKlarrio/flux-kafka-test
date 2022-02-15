@@ -5,20 +5,20 @@ metadata:
 spec:
   kafka:
     version: 2.7.0
-    replicas: 2
+    replicas: 3
     listeners:
-      - name: plain
+      - name: tlsauth
         port: 9092
         type: internal
-        tls: false
-      - name: tls
-        port: 9093
-        type: internal
         tls: true
-      - name: external
-        port: 9094
+        authentication:
+          type: tls
+      - name: extingress
+        port: 9093
         type: nodeport
         tls: true
+        authentication:
+          type: tls
     config:
       offsets.topic.replication.factor: 1
       transaction.state.log.replication.factor: 1
@@ -37,7 +37,7 @@ spec:
       loggers:
         kafka.root.logger.level: "INFO"    
   zookeeper:
-    replicas: 1
+    replicas: 3
     storage:
       type: persistent-claim
       size: 5Gi
