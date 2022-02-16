@@ -1,0 +1,10 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: tenanta-kafka-client-user-role
+  namespace: kafka-op
+rules:
+- apiGroups: [""]
+  resources: ["secrets"]
+  resourceNames: [tenanta-my-user]
+  verbs: ["get"]

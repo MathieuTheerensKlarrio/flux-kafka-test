@@ -1,0 +1,10 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: kafka-client-ca-cert-role
+  namespace: kafka-op
+rules:
+- apiGroups: [""]
+  resources: ["secrets"]
+  resourceNames: ["testing-strimzi-cluster-cluster-ca-cert"]
+  verbs: ["get"]
