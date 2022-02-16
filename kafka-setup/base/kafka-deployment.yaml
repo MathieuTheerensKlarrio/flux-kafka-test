@@ -42,6 +42,13 @@ spec:
       type: persistent-claim
       size: 5Gi
       deleteClaim: false
-  entityOperator:
-    topicOperator: {}
-    userOperator: {}
+#  entityOperator:
+#    topicOperator: {}
+#    userOperator: {}
+    
+  entityOperator: 
+    topicOperator:
+      watchedNamespace: "*"
+    userOperator:
+      watchedNamespace: "*"
+
