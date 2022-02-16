@@ -1,0 +1,13 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: tenanta-kafka-client-role-binding
+  namespace: testing
+subjects:
+- kind: ServiceAccount
+  name: default
+  namespace: tenanta
+roleRef:
+  kind: Role
+  name: tenanta-kafka-client-user-role
+  apiGroup: rbac.authorization.k8s.io
