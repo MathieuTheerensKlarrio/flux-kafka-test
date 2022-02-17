@@ -1,0 +1,13 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: tenantb-kafka-client-broker-role-binding
+  namespace: testing
+subjects:
+- kind: ServiceAccount
+  name: default
+  namespace: tenantb
+roleRef:
+  kind: Role
+  name: kafka-client-ca-cert-role
+  apiGroup: rbac.authorization.k8s.io
