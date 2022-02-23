@@ -1,0 +1,10 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: testing-kafka-client-user-role
+  namespace: testing
+rules:
+- apiGroups: [""]
+  resources: ["secrets"]
+  resourceNames: [testing-my-user]
+  verbs: ["get"]
