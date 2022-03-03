@@ -4,3 +4,5 @@ bases:
 - ../../kafka-setup/base/
 namespace: testing
 namePrefix: testing-
+
+
