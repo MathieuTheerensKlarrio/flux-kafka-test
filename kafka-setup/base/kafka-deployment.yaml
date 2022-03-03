@@ -36,12 +36,144 @@ spec:
       type: inline
       loggers:
         kafka.root.logger.level: "INFO"    
+    metricsConfig:
+      type: jmxPrometheusExporter
+      valueFrom:
+        configMapKeyRef:
+          name: kafka-metrics
+          key: kafka-metrics-config.yml
   zookeeper:
     replicas: 3
     storage:
       type: persistent-claim
       size: 5Gi
       deleteClaim: false
+    metricsConfig:
+      type: jmxPrometheusExporter
+      valueFrom:
+        configMapKeyRef:
+          name: kafka-metrics
+          key: zookeeper-metrics-config.yml
   entityOperator:
     topicOperator: {}
     userOperator: {}
+---
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: kafka-metrics
+  labels:
+    app: strimzi
+data:
+  kafka-metrics-config.yml: |
+    # See https://github.com/prometheus/jmx_exporter for more info about JMX Prometheus Exporter metrics
+    lowercaseOutputName: true
+    rules:
+    - pattern: kafka.(server)<type=(ReplicaManager), name=(UnderReplicatedPartitions)><>Value
+      help: Number of under-replicated partitions (| ISR | < | all replicas |). Alert if value is greater than 0.
+      name: kafka_$1_$2_$3
+      type: GAUGE
+    - pattern: kafka.(controller)<type=(KafkaController), name=(ActiveControllerCount)><>Value
+      help: Number of active controllers in the cluster. Alert if the aggregated sum across all brokers in the cluster is anything other than 1 because there should be exactly one controller per cluster.
+      name: kafka_$1_$2_$3
+      type: GAUGE
+    - pattern: kafka.(server)<type=(KafkaRequestHandlerPool), name=(RequestHandlerAvgIdlePercent)><>OneMinuteRate
+      help: Average fraction of time the request handler threads are idle. Values are between 0 (all resources are used) and 1 (all resources are available)
+      name: kafka_$1_$2_$3
+      type: GAUGE
+    - pattern: kafka.(server)<type=(BrokerTopicMetrics), name=(BytesInPerSec)><>Count
+      help: Aggregate incoming byte rate for all topics.
+      name: kafka_$1_$2_$3_bytes_total
+      type: COUNTER
+    - pattern: kafka.(server)<type=(BrokerTopicMetrics), name=(BytesInPerSec), topic=(.*)><>Count
+      help: Aggregate incoming byte rate per topic.
+      name: kafka_$1_$2_$3_bytes_total
+      type: COUNTER
+      labels:
+        topic: $4
+    - pattern: kafka.(server)<type=(BrokerTopicMetrics), name=(BytesOutPerSec)><>Count
+      help: Aggregate outgoing byte rate for all topics.
+      name: kafka_$1_$2_$3_bytes_total
+      type: COUNTER
+    - pattern: kafka.(server)<type=(BrokerTopicMetrics), name=(BytesOutPerSec), topic=(.*)><>Count
+      help: Aggregate outgoing byte rate per topic.
+      name: kafka_$1_$2_$3_bytes_total
+      type: COUNTER
+      labels:
+        topic: $4
+    - pattern: kafka.(server)<type=(BrokerTopicMetrics), name=(MessagesInPerSec)><>Count
+      help: Aggregate incoming message rate for all topics.
+      name: kafka_$1_$2_$3_messages_total
+      type: COUNTER
+    - pattern: kafka.(server)<type=(BrokerTopicMetrics), name=(MessagesInPerSec), topic=(.*)><>Count
+      help: Aggregate incoming message rate per topic.
+      name: kafka_$1_$2_$3_messages_total
+      type: COUNTER
+      labels:
+        topic: $4
+    - pattern: kafka.(server)<type=(ReplicaManager), name=(PartitionCount)><>Value
+      help: Number of partitions on this broker. This should be mostly even across all brokers.
+      name: kafka_$1_$2_$3
+      type: GAUGE
+    - pattern: kafka.(server)<type=(ReplicaManager), name=(LeaderCount)><>Value
+      help: Number of leaders on this broker. This should be mostly even across all brokers. If not, set auto.leader.rebalance.enable to true on all brokers in the cluster.
+      name: kafka_$1_$2_$3
+      type: GAUGE
+    - pattern: kafka.(controller)<type=(KafkaController), name=(OfflinePartitionsCount)><>Value
+      help: Number of partitions that don’t have an active leader and are hence not writable or readable. Alert if value is greater than 0.
+      name: kafka_$1_$2_$3
+      type: GAUGE
+    - pattern: kafka.(network)<type=(RequestMetrics), name=(TotalTimeMs), (request)=(.*)><>(99)thPercentile
+      help: Total time to serve the specified request
+      name: kafka_$1_$2_$3_seconds
+      type: GAUGE
+      valueFactor: 0.001
+      labels:
+        "quantile": "0.$6"
+        "$4": "$5"
+    - pattern: kafka.(network)<type=(RequestMetrics), name=(TotalTimeMs), (request)=(.*)><>(50)thPercentile
+      help: Total time to serve the specified request
+      name: kafka_$1_$2_$3_seconds
+      type: GAUGE
+      valueFactor: 0.001
+      labels:
+        "quantile": "0.$6"
+        "$4": "$5"
+    - pattern: kafka.(network)<type=(RequestMetrics), name=(RequestsPerSec), (request)=(.*)><>OneMinuteRate
+      help: Request rate
+      name: kafka_$1_$2_$3_1m_avg
+      type: GAUGE
+      labels:
+        "$4": "$5"
+
+  zookeeper-metrics-config.yml: |
+    # See https://github.com/prometheus/jmx_exporter for more info about JMX Prometheus Exporter metrics
+    lowercaseOutputName: true
+    rules:
+    # replicated Zookeeper
+    - pattern: "org.apache.ZooKeeperService<name0=ReplicatedServer_id(\\d+)><>(\\w+)"
+      name: "zookeeper_$2"
+      type: GAUGE
+    - pattern: "org.apache.ZooKeeperService<name0=ReplicatedServer_id(\\d+), name1=replica.(\\d+)><>(\\w+)"
+      name: "zookeeper_$3"
+      type: GAUGE
+      labels:
+        replicaId: "$2"
+    - pattern: "org.apache.ZooKeeperService<name0=ReplicatedServer_id(\\d+), name1=replica.(\\d+), name2=(\\w+)><>(Packets\\w+)"
+      name: "zookeeper_$4"
+      type: COUNTER
+      labels:
+        replicaId: "$2"
+        memberType: "$3"
+    - pattern: "org.apache.ZooKeeperService<name0=ReplicatedServer_id(\\d+), name1=replica.(\\d+), name2=(\\w+)><>(\\w+)"
+      name: "zookeeper_$4"
+      type: GAUGE
+      labels:
+        replicaId: "$2"
+        memberType: "$3"
+    - pattern: "org.apache.ZooKeeperService<name0=ReplicatedServer_id(\\d+), name1=replica.(\\d+), name2=(\\w+), name3=(\\w+)><>(\\w+)"
+      name: "zookeeper_$4_$5"
+      type: GAUGE
+      labels:
+        replicaId: "$2"
+        memberType: "$3"
