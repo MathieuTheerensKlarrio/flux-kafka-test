@@ -2,9 +2,6 @@ apiVersion: kafka.strimzi.io/v1beta2
 kind: Kafka
 metadata:
   name: strimzi-cluster
-  annotations: 
-    prometheus.io/scrape: true
-    prometheus.io/port: 9404
 spec:
   kafka:
     version: 2.7.0
@@ -45,6 +42,11 @@ spec:
         configMapKeyRef:
           name: PLACEHOLDER
           key: kafka-metrics-config.yml
+    template:
+      pod:
+        annotations:
+          prometheus.io/scrape: true
+          prometheus.io/port: 9404
   zookeeper:
     replicas: 3
     storage:
