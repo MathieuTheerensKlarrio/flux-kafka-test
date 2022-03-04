@@ -44,9 +44,10 @@ spec:
           key: kafka-metrics-config.yml
     template:
       pod:
-        annotations:
-          prometheus.io/scrape: true
-          prometheus.io/port: 9404
+        metadata:
+          annotations:
+            prometheus.io/scrape: true
+            prometheus.io/port: 9404
   zookeeper:
     replicas: 3
     storage:
@@ -59,6 +60,12 @@ spec:
         configMapKeyRef:
           name: PLACEHOLDER
           key: zookeeper-metrics-config.yml
+    template:
+      pod:
+        metadata:
+          annotations:
+            prometheus.io/scrape: true
+            prometheus.io/port: 9404
   entityOperator:
     topicOperator: {}
     userOperator: {}
