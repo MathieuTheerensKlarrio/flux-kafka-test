@@ -40,7 +40,7 @@ spec:
       type: jmxPrometheusExporter
       valueFrom:
         configMapKeyRef:
-          name: kafka-metrics
+          name: PLACEHOLDER
           key: kafka-metrics-config.yml
   zookeeper:
     replicas: 3
@@ -52,7 +52,7 @@ spec:
       type: jmxPrometheusExporter
       valueFrom:
         configMapKeyRef:
-          name: kafka-metrics
+          name: PLACEHOLDER
           key: zookeeper-metrics-config.yml
   entityOperator:
     topicOperator: {}

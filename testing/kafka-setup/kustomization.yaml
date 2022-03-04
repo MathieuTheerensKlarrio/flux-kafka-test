@@ -5,4 +5,20 @@ bases:
 namespace: testing
 namePrefix: testing-
 
-
+replacements:
+- source:
+    kind: ConfigMap
+    name: testing-kafka-metrics
+    version: v1
+  targets:
+  - select: 
+      kind: Kafka
+      name: testing-strimzi-cluster
+    fieldPaths:
+    - spec.kafka.metricsConfig.valueFrom.configMapKeyRef.name
+    
+  - select: 
+      kind: Kafka
+      name: testing-strimzi-cluster
+    fieldPaths:
+    - spec.zookeeper.metricsConfig.valueFrom.configMapKeyRef.name
